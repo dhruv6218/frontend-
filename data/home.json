@@ -1,0 +1,52 @@
+{
+  "hero": {
+    "headline": "Automated Vendor Compliance & Fraud Detection",
+    "subheadline": "Verify GST, PAN, Aadhaar, MCA, Bank and more in seconds. Prevent fraud with AI-powered insights.",
+    "primaryCta": { "label": "Start Free", "href": "/dashboard" },
+    "secondaryCta": { "label": "See Features", "href": "#features" }
+  },
+  "features": [
+    { "icon": "solar:lightning-bold", "title": "Instant Verification", "description": "Run GST, PAN, Aadhaar and Bank checks in under 10 seconds." },
+    { "icon": "material-symbols:robot", "title": "Fraud Detection AI", "description": "Explainable risk scores highlight red flags." },
+    { "icon": "formkit:filepdf", "title": "Automated Reports", "description": "Download PDFs, share secure links and email delivery built-in." },
+    { "icon": "mdi:account-group", "title": "Team Ready", "description": "Roles, audit logs and SSO for organizations of any size." }
+  ],
+  "products": [
+    { "name": "GST Verification", "price": "₹49/check", "description": "Validate GSTIN, status and business metadata.", "image": "", "href": "/dashboard/verify/gst" },
+    { "name": "PAN Verification", "price": "₹39/check", "description": "Match PAN to legal name and status.", "image": "", "href": "/dashboard/verify/pan" },
+    { "name": "Bank Account Verify", "price": "₹29/check", "description": "Confirm account holder name and IFSC.", "image": "", "href": "/dashboard/verify/bank" }
+  ],
+  "pricing": {
+    "plans": [
+      {
+        "name": "Starter",
+        "priceMonthly": "₹249",
+        "features": ["50 verifications", "Email reports", "Basic support"],
+        "cta": { "label": "Choose Starter", "href": "/pricing" }
+      },
+      {
+        "name": "Growth",
+        "priceMonthly": "₹999",
+        "features": ["500 verifications", "Share links", "Priority support"],
+        "popular": true,
+        "cta": { "label": "Choose Growth", "href": "/pricing" }
+      },
+      {
+        "name": "Enterprise",
+        "priceMonthly": "Custom",
+        "features": ["Bulk & API", "SSO & RBAC", "Dedicated support"],
+        "cta": { "label": "Contact Sales", "href": "/contact?type=sales" }
+      }
+    ]
+  },
+  "testimonials": [
+    { "name": "Ananya Gupta", "role": "Risk Lead, FintechCo", "rating": 5, "quote": "Cut our vendor verification time from days to minutes." },
+    { "name": "Rohit Sharma", "role": "Ops Head, RetailCorp", "rating": 4, "quote": "AI risk scores are accurate and actionable." },
+    { "name": "Meera Iyer", "role": "Founder, StartupX", "rating": 5, "quote": "Fast onboarding without compromising compliance." }
+  ],
+  "contact": {
+    "title": "Contact Us",
+    "subtext": "Questions? We’re here to help.",
+    "fields": ["fullName", "email", "company", "phone", "message"]
+  }
+}
