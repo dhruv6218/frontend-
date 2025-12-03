@@ -9,6 +9,7 @@ interface User {
     name: string;
     role: string;
     credits: number;
+    plan_id?: string;
     avatar_url?: string;
 }
 
@@ -38,7 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const session = await mockService.auth.getSession();
                 setUser(session);
             } catch (err) {
-                console.error("Auth init failed", err);
+                // Silently handle auth init failures in production
+                if (process.env.NODE_ENV === 'development') {
+                    console.error("Auth init failed", err);
+                }
             } finally {
                 setLoading(false);
             }

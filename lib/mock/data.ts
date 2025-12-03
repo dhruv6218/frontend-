@@ -42,17 +42,47 @@ export const MOCK_VERIFICATIONS = [
 
 export const MOCK_REPORTS = [
     {
-        id: "rep_1",
-        title: "Vendor Compliance Report - Q3",
-        created_at: new Date(Date.now() - 172800000).toISOString(),
-        url: "#"
+        id: "RPT-1023",
+        vendor: "Shree Logistics Pvt Ltd",
+        type: "All-in-One",
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+        risk_level: 18,
+        status: "Active",
+        expires_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+        pdf_url: null,
+        drive_file_id: null
     },
     {
-        id: "rep_2",
-        title: "Vendor Risk Assessment - Neo Components",
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        url: "#"
+        id: "RPT-1022",
+        vendor: "Neo Components",
+        type: "PAN",
+        created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
+        risk_level: 74,
+        status: "Active",
+        expires_at: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day from now
+        pdf_url: null,
+        drive_file_id: null
+    },
+    {
+        id: "RPT-1021",
+        vendor: "Apex Supplies",
+        type: "Bank",
+        created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago - expired
+        risk_level: 16,
+        status: "Expired",
+        expires_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // expired
+        pdf_url: null,
+        drive_file_id: null
     }
+];
+
+export const MOCK_VENDORS = [
+    { id: "vendor_1", name: "Shree Logistics Pvt Ltd", risk_level: 7, status: "Low Risk" },
+    { id: "vendor_2", name: "Apex Supplies", risk_level: 18, status: "Low Risk" },
+    { id: "vendor_3", name: "Neo Components", risk_level: 74, status: "High Risk" },
+    { id: "vendor_4", name: "Kamal Traders", risk_level: 12, status: "Low Risk" },
+    { id: "vendor_5", name: "Bright Textiles", risk_level: 22, status: "Medium Risk" },
+    { id: "vendor_6", name: "High Risk Corp", risk_level: 85, status: "High Risk" },
 ];
 
 export const MOCK_POSTS = [

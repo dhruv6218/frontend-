@@ -1,8 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Icon } from "@iconify/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { mockService } from "@/lib/mock/service";
+import { safeWindowOpen, sanitizeInput } from "@/lib/utils/security";
+import { ToastContainer } from "@/app/components/ui/Toast";
+import { isValidEmail } from "@/lib/utils/validation";
 
 const ORANGE = "#F97316";
 const NAVY = "#1E3A8A";
@@ -56,8 +60,60 @@ const OFFICE_INFO = [
 ];
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type?: "success" | "error" | "info" | "warning" }>>([]);
+
+  const addToast = (message: string, type: "success" | "error" | "info" | "warning" = "info") => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const handleWhatsAppClick = () => {
-    window.open("https://wa.me/919034950792", "_blank");
+    safeWindowOpen("https://wa.me/919034950792", "_blank");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Enhanced validation
+    if (!formData.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    if (!isValidEmail(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (!formData.message.trim()) {
+      setError("Message is required");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      // Sanitize inputs
+      const sanitizedData = {
+        name: sanitizeInput(formData.name),
+        email: sanitizeInput(formData.email),
+        message: sanitizeInput(formData.message),
+      };
+      await mockService.contact.submit(sanitizedData);
+      setSuccess(true);
+      setFormData({ name: "", email: "", message: "" });
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err) {
+      setError((err as Error).message || "Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -136,6 +192,94 @@ export default function ContactPage() {
         ))}
       </motion.div>
 
+      {/* Contact Form */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mb-16"
+      >
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-neutral-200/70 p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2 text-center">Send us a Message</h2>
+          <p className="text-sm text-neutral-600 mb-6 text-center">
+            Fill out the form below and we'll get back to you as soon as possible.
+          </p>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Name</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                placeholder="Your name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                placeholder="your.email@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Message</label>
+              <textarea
+                required
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                rows={5}
+                className="w-full px-4 py-3 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 resize-none"
+                placeholder="Tell us how we can help..."
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-orange-500 to-blue-600 text-white font-medium hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Icon icon="mdi:loading" className="animate-spin" width={18} />
+                  Sending...
+                </span>
+              ) : (
+                "Send Message"
+              )}
+            </button>
+          </form>
+
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-4 p-4 rounded-lg bg-green-50 border border-green-200 flex items-center gap-2 text-sm text-green-700"
+              >
+                <Icon icon="mdi:check-circle" width={18} />
+                <span>Message sent successfully! We'll get back to you soon.</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
       {/* CTA Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -167,6 +311,8 @@ export default function ContactPage() {
           We're a remote-first team serving clients globally. All times are in IST (Indian Standard Time).
         </p>
       </motion.div>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }

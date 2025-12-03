@@ -212,15 +212,26 @@ export default function BrandingSettings() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">Website</label>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">Support Phone</label>
                                 <input
-                                    type="url"
-                                    name="website"
-                                    value={branding.website}
+                                    type="tel"
+                                    name="phone"
+                                    value={branding.phone}
                                     onChange={handleChange}
+                                    placeholder="+91 98765 43210"
                                     className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                                 />
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-2">Website</label>
+                            <input
+                                type="url"
+                                name="website"
+                                value={branding.website}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                            />
                         </div>
 
                         <div>
@@ -322,11 +333,29 @@ export default function BrandingSettings() {
 
                     {/* Report Footer */}
                     <div className="p-6 border-t border-neutral-200 bg-white text-center">
-                        <p className="text-xs text-neutral-500 mb-2">{branding.footerText}</p>
-                        <div className="flex justify-center gap-4 text-[10px] text-neutral-400">
-                            <span>{branding.supportEmail}</span>
-                            <span>•</span>
-                            <span>{branding.website}</span>
+                        <p className="text-xs text-neutral-500 mb-3">{branding.footerText}</p>
+                        <div className="flex flex-col items-center gap-2 text-[10px] text-neutral-400">
+                            <div className="flex items-center gap-3">
+                                <span className="flex items-center gap-1">
+                                    <Icon icon="mdi:email-outline" width={12} />
+                                    {branding.supportEmail}
+                                </span>
+                                {branding.phone && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-1">
+                                            <Icon icon="mdi:phone-outline" width={12} />
+                                            {branding.phone}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                            {branding.website && (
+                                <span className="flex items-center gap-1">
+                                    <Icon icon="mdi:web" width={12} />
+                                    {branding.website}
+                                </span>
+                            )}
                         </div>
                         {!branding.hideRavonoBranding && (
                             <div className="mt-4 pt-4 border-t border-neutral-100 flex items-center justify-center gap-1.5 opacity-50">

@@ -5,6 +5,8 @@ import PageShell from "@/app/components/dashboard/PageShell";
 import React, { useEffect, useState } from "react";
 import { mockService } from "@/lib/mock/service";
 import { Icon } from "@iconify/react";
+import { ToastContainer } from "@/app/components/ui/Toast";
+import ConfirmDialog from "@/app/components/ui/ConfirmDialog";
 
 type ApiKey = { id: string; last4: string; createdAt: string; scope: string };
 type Webhook = { id: string; url: string; events: string[] };
@@ -15,12 +17,75 @@ export default function Integrations() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [url, setUrl] = useState("");
   const [events, setEvents] = useState<string[]>(["verification.completed"]);
+  const [driveStatus, setDriveStatus] = useState<{ connected: boolean; email: string | null; auto_save: boolean }>({ connected: false, email: null, auto_save: false });
+  const [loading, setLoading] = useState(false);
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type?: "success" | "error" | "info" | "warning" }>>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; onConfirm: () => void }>({ isOpen: false, onConfirm: () => {} });
+
+  const addToast = (message: string, type: "success" | "error" | "info" | "warning" = "info") => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   useEffect(() => {
-    // Placeholder loading
+    loadDriveStatus();
     setKeys([{ id: "key_123", last4: "abcd", createdAt: new Date().toISOString(), scope: "read" }]);
     setWebhooks([{ id: "wh_123", url: "https://example.com/webhooks/vendor", events: ["verification.completed"] }]);
   }, []);
+
+  async function loadDriveStatus() {
+    const status = await mockService.integrations.getDriveStatus();
+    setDriveStatus(status);
+  }
+
+  const handleConnectDrive = async () => {
+    setLoading(true);
+    try {
+      await mockService.integrations.connectDrive();
+      await loadDriveStatus();
+      addToast("Google Drive connected successfully!", "success");
+    } catch (err) {
+      addToast("Failed to connect Google Drive", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnectDrive = () => {
+    setConfirmDialog({
+      isOpen: true,
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await mockService.integrations.disconnectDrive();
+          await loadDriveStatus();
+          addToast("Google Drive disconnected", "success");
+        } catch (err) {
+          addToast("Failed to disconnect", "error");
+        } finally {
+          setLoading(false);
+          setConfirmDialog({ isOpen: false, onConfirm: () => {} });
+        }
+      },
+    });
+  };
+
+  const handleToggleAutoSave = async (enabled: boolean) => {
+    setLoading(true);
+    try {
+      await mockService.integrations.setAutoSave(enabled);
+      await loadDriveStatus();
+      addToast(`Auto-save ${enabled ? 'enabled' : 'disabled'}`, "success");
+    } catch (err) {
+      addToast("Failed to update auto-save setting", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   async function createKey() {
     await mockService.integrations.createKey(scope);
@@ -45,28 +110,59 @@ export default function Integrations() {
         <div className="mb-8">
           <h3 className="text-sm font-semibold text-neutral-900 mb-4 uppercase tracking-wider">Connected Apps</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { name: "Google Drive", icon: "mdi:google-drive", color: "text-blue-500", desc: "Store reports automatically", connected: true },
-            ].map((app) => (
-              <div key={app.name} className="bg-white rounded-xl border border-neutral-200/70 p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center ${app.color}`}>
-                    <Icon icon={app.icon} width={24} />
-                  </div>
-                  {app.connected ? (
-                    <span className="px-2 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-medium border border-green-100">
-                      Connected
-                    </span>
-                  ) : (
-                    <button className="px-3 py-1.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 transition-colors">
-                      Connect
-                    </button>
-                  )}
+            <div className="bg-white rounded-xl border border-neutral-200/70 p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center text-blue-500">
+                  <Icon icon="mdi:google-drive" width={24} />
                 </div>
-                <h4 className="font-semibold text-neutral-900 text-sm">{app.name}</h4>
-                <p className="text-xs text-neutral-500 mt-1">{app.desc}</p>
+                {driveStatus.connected ? (
+                  <span className="px-2 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-medium border border-green-100">
+                    Connected
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleConnectDrive}
+                    disabled={loading}
+                    className="px-3 py-1.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                  >
+                    Connect
+                  </button>
+                )}
               </div>
-            ))}
+              <h4 className="font-semibold text-neutral-900 text-sm mb-1">Google Drive</h4>
+              {driveStatus.connected && driveStatus.email && (
+                <p className="text-xs text-neutral-600 mb-2">Connected as: {driveStatus.email}</p>
+              )}
+              <p className="text-xs text-neutral-500">{driveStatus.connected ? "Store reports automatically" : "Store reports automatically"}</p>
+              
+              {driveStatus.connected && (
+                <div className="mt-4 pt-4 border-t border-neutral-100">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div>
+                      <p className="text-xs font-medium text-neutral-900">Auto-save all new reports</p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">Automatically save reports to Drive</p>
+                    </div>
+                    <div className={`w-11 h-6 rounded-full transition-colors duration-200 ease-in-out relative ${driveStatus.auto_save ? 'bg-orange-500' : 'bg-neutral-200'}`}>
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={driveStatus.auto_save}
+                        onChange={(e) => handleToggleAutoSave(e.target.checked)}
+                        disabled={loading}
+                      />
+                      <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${driveStatus.auto_save ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </div>
+                  </label>
+                  <button
+                    onClick={handleDisconnectDrive}
+                    disabled={loading}
+                    className="mt-3 w-full px-3 py-1.5 rounded-md border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition-colors disabled:opacity-50"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -178,6 +274,18 @@ export default function Integrations() {
             </div>
           </div>
         </div>
+
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          title="Disconnect Google Drive?"
+          message="Are you sure you want to disconnect Google Drive? Auto-saved reports will stop."
+          confirmText="Disconnect"
+          cancelText="Cancel"
+          confirmVariant="danger"
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: () => {} })}
+        />
       </PageShell>
     </Protected>
   );

@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth/mock-client";
+import { safeWindowOpen } from "@/lib/utils/security";
 
 const ORANGE = "#F97316";
 const NAVY = "#1E3A8A";
@@ -63,7 +64,7 @@ export default function ServicePage() {
   const isAuthenticated = !!user;
 
   const handleWhatsAppClick = () => {
-    window.open("https://wa.me/919034950792", "_blank");
+    safeWindowOpen("https://wa.me/919034950792", "_blank");
   };
 
   return (

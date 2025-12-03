@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
+import ConfirmDialog from "@/app/components/ui/ConfirmDialog";
 
 export default function SecuritySettings() {
     const [loading, setLoading] = useState(false);
@@ -11,6 +12,7 @@ export default function SecuritySettings() {
     const [show2FAModal, setShow2FAModal] = useState(false);
     const [showDisable2FAModal, setShowDisable2FAModal] = useState(false);
     const [otp, setOtp] = useState("");
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     // Mock sessions
     const sessions = [
@@ -52,9 +54,12 @@ export default function SecuritySettings() {
     };
 
     const handleLogoutAll = () => {
-        if (confirm("Are you sure you want to log out from all other devices?")) {
-            showNotification("Logged out from all other devices.");
-        }
+        setShowLogoutConfirm(true);
+    };
+
+    const confirmLogoutAll = () => {
+        showNotification("Logged out from all other devices.");
+        setShowLogoutConfirm(false);
     };
 
     return (
@@ -294,6 +299,17 @@ export default function SecuritySettings() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={showLogoutConfirm}
+                title="Log out from all devices?"
+                message="Are you sure you want to log out from all other devices? You'll need to sign in again on those devices."
+                confirmText="Log Out All"
+                cancelText="Cancel"
+                confirmVariant="danger"
+                onConfirm={confirmLogoutAll}
+                onCancel={() => setShowLogoutConfirm(false)}
+            />
         </div>
     );
 }

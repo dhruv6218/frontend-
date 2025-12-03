@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { ToastContainer } from "@/app/components/ui/Toast";
 
 const CATEGORIES = [
     "Verification",
@@ -24,6 +25,16 @@ export default function SubmitSuggestionPage() {
     });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ title?: string; details?: string }>({});
+    const [toasts, setToasts] = useState<Array<{ id: string; message: string; type?: "success" | "error" | "info" | "warning" }>>([]);
+
+    const addToast = (message: string, type: "success" | "error" | "info" | "warning" = "info") => {
+        const id = Date.now().toString();
+        setToasts((prev) => [...prev, { id, message, type }]);
+    };
+
+    const removeToast = (id: string) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,13 +59,12 @@ export default function SubmitSuggestionPage() {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Show success toast (you can add a toast library later)
-        alert("Thanks! Your suggestion has been submitted.");
+        addToast("Thanks! Your suggestion has been submitted.", "success");
 
         // Redirect back to suggestions list
         setTimeout(() => {
             router.push("/suggestions");
-        }, 500);
+        }, 1500);
     };
 
     const handleCancel = () => {
@@ -201,6 +211,8 @@ export default function SubmitSuggestionPage() {
                     </div>
                 </div>
             </motion.div>
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }

@@ -12,6 +12,8 @@ export default function AdminSettings() {
   const [whatsappNumber, setWhatsappNumber] = useState("9034950792");
   const [privacyUrl, setPrivacyUrl] = useState("/legal/privacy");
   const [termsUrl, setTermsUrl] = useState("/legal/terms");
+  const [cookieUrl, setCookieUrl] = useState("/legal/cookies");
+  const [disclaimerUrl, setDisclaimerUrl] = useState("/legal/disclaimer");
   const [driveIntegration, setDriveIntegration] = useState(true);
   const [manualService, setManualService] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -132,6 +134,26 @@ export default function AdminSettings() {
                 type="text"
                 value={termsUrl}
                 onChange={(e) => setTermsUrl(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Cookie Policy URL</label>
+              <input
+                type="text"
+                value={cookieUrl}
+                onChange={(e) => setCookieUrl(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Disclaimer URL</label>
+              <input
+                type="text"
+                value={disclaimerUrl}
+                onChange={(e) => setDisclaimerUrl(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
               />
             </div>

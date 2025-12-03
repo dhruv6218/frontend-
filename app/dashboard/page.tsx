@@ -40,22 +40,23 @@ export default function DashboardOverview() {
       <PageShell title="Dashboard" subtitle="Overview of your vendor verifications and risks">
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: t("dashboard.kpi.verifications"), value: "248", icon: "mdi:check-decagram", color: "text-blue-600", bg: "bg-blue-50", trend: "+12%", trendUp: true },
-            { label: t("dashboard.kpi.credits"), value: "752", icon: "mdi:database-outline", color: "text-orange-600", bg: "bg-orange-50", trend: "-5%", trendUp: false },
-            { label: t("dashboard.kpi.success"), value: "92%", icon: "mdi:percent-outline", color: "text-green-600", bg: "bg-green-50", trend: "+2%", trendUp: true },
-            { label: t("dashboard.kpi.team"), value: "5", icon: "mdi:account-multiple-outline", color: "text-purple-600", bg: "bg-purple-50", trend: "0%", trendUp: true },
-            { label: t("dashboard.kpi.pending"), value: "2", icon: "mdi:clock-outline", color: "text-yellow-600", bg: "bg-yellow-50", trend: "-1", trendUp: true },
+            { label: "Credits Remaining", value: "752", icon: "mdi:database-outline", color: "text-orange-600", bg: "bg-orange-50", trend: null, trendUp: null },
+            { label: "Verifications This Month", value: "248", icon: "mdi:check-decagram", color: "text-blue-600", bg: "bg-blue-50", trend: "+12%", trendUp: true },
+            { label: "Total Reports Generated", value: "156", icon: "mdi:file-chart", color: "text-green-600", bg: "bg-green-50", trend: "+8%", trendUp: true },
+            { label: "Vendors with High Risk", value: "2", icon: "mdi:alert-circle", color: "text-red-600", bg: "bg-red-50", trend: null, trendUp: null },
           ].map((c) => (
             <div key={c.label} className="rounded-xl border border-neutral-200/70 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className={`w-10 h-10 rounded-lg ${c.bg} flex items-center justify-center ${c.color}`}>
                   <Icon icon={c.icon} width={20} />
                 </div>
-                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${c.trendUp ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {c.trend}
-                </span>
+                {c.trend && (
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${c.trendUp ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    {c.trend}
+                  </span>
+                )}
               </div>
               <div>
                 <p className="text-2xl font-bold text-neutral-900" style={{ fontFamily: 'var(--font-geist)' }}>{c.value}</p>
@@ -78,7 +79,7 @@ export default function DashboardOverview() {
                   <div className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
                     <Icon icon="mdi:plus" width={16} />
                   </div>
-                  <span className="text-sm font-medium text-neutral-700 group-hover:text-orange-700">{t("dashboard.quick.new")}</span>
+                  <span className="text-sm font-medium text-neutral-700 group-hover:text-orange-700">Verify Vendor</span>
                 </div>
                 <Icon icon="mdi:chevron-right" width={16} className="text-neutral-400 group-hover:text-orange-400" />
               </Link>
@@ -87,7 +88,7 @@ export default function DashboardOverview() {
                   <div className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                     <Icon icon="mdi:cloud-upload-outline" width={16} />
                   </div>
-                  <span className="text-sm font-medium text-neutral-700 group-hover:text-blue-700">{t("dashboard.quick.bulk")}</span>
+                  <span className="text-sm font-medium text-neutral-700 group-hover:text-blue-700">Bulk Upload</span>
                 </div>
                 <Icon icon="mdi:chevron-right" width={16} className="text-neutral-400 group-hover:text-blue-400" />
               </Link>
@@ -96,7 +97,7 @@ export default function DashboardOverview() {
                   <div className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
                     <Icon icon="mdi:file-document-outline" width={16} />
                   </div>
-                  <span className="text-sm font-medium text-neutral-700 group-hover:text-purple-700">{t("dashboard.quick.reports")}</span>
+                  <span className="text-sm font-medium text-neutral-700 group-hover:text-purple-700">Open Reports</span>
                 </div>
                 <Icon icon="mdi:chevron-right" width={16} className="text-neutral-400 group-hover:text-purple-400" />
               </Link>
