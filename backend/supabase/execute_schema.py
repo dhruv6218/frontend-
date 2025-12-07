@@ -5,8 +5,14 @@ Execute Supabase schema using direct PostgreSQL connection
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-# Connection string
-DATABASE_URL = "postgresql://postgres:baadshah6218@db.uacgbxkjnlxkjmqdgbvq.supabase.co:5432/postgres"
+# Connection string - Try multiple endpoints
+DATABASE_URLS = [
+    "postgresql://postgres.uacgbxkjnlxkjmqdgbvq:baadshah6218@aws-0-ap-south-1.pooler.supabase.com:6543/postgres",
+    "postgresql://postgres:baadshah6218@db.uacgbxkjnlxkjmqdgbvq.supabase.co:5432/postgres",
+    "postgresql://postgres:baadshah6218@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+]
+
+DATABASE_URL = DATABASE_URLS[0]  # Try pooler first
 
 print("=" * 70)
 print("🚀 EXECUTING SUPABASE SCHEMA")
