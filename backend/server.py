@@ -521,6 +521,110 @@ async def get_plans():
     return result.data
 
 # =============================================
+# PAYMENT ROUTES (RAZORPAY)
+# =============================================
+
+@app.post("/api/payment/create-order")
+async def create_payment_order(plan_code: str, authorization: str = Header(None)):
+    """Create Razorpay order for plan purchase"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        # Get user profile
+        profile = supabase.table("profiles").select("name").eq("user_id", user.id).single().execute()
+        
+        from services.razorpay_service import RazorpayService
+        razorpay_service = RazorpayService()
+        
+        order_data = razorpay_service.create_subscription(
+            plan_id=plan_code,
+            customer_email=user.email,
+            customer_name=profile.data["name"],
+            org_id=org_id
+        )
+        
+        return order_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
+
+@app.post("/api/payment/verify")
+async def verify_payment(
+    razorpay_order_id: str,
+    razorpay_payment_id: str,
+    razorpay_signature: str,
+    plan_code: str,
+    authorization: str = Header(None)
+):
+    """Verify payment and update subscription"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        from services.razorpay_service import RazorpayService
+        razorpay_service = RazorpayService()
+        
+        # Verify signature
+        is_valid = razorpay_service.verify_payment(
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature
+        )
+        
+        if not is_valid:
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+        
+        # Get plan details
+        plan = supabase.table("plans").select("*").eq("code", plan_code).single().execute()
+        
+        if not plan.data:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        
+        # Update subscription
+        # First, deactivate old subscriptions
+        supabase.table("subscriptions").update({"status": "cancelled"}).eq("org_id", org_id).execute()
+        
+        # Create new subscription
+        new_subscription = {
+            "org_id": org_id,
+            "plan_id": plan.data["id"],
+            "status": "active",
+            "billing_cycle": "monthly",
+            "start_at": datetime.now(timezone.utc).isoformat(),
+            "renewal_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+            "razorpay_subscription_id": razorpay_payment_id,
+        }
+        
+        supabase.table("subscriptions").insert(new_subscription).execute()
+        
+        # Update credits
+        supabase.table("credits").update({
+            "current_balance": plan.data["monthly_credits"],
+            "monthly_limit": plan.data["monthly_credits"],
+        }).eq("org_id", org_id).execute()
+        
+        # Log audit
+        supabase.table("audit_logs").insert({
+            "org_id": org_id,
+            "actor_id": user.id,
+            "action": "PLAN_UPGRADE",
+            "target_type": "SUBSCRIPTION",
+            "details": {"plan": plan_code, "payment_id": razorpay_payment_id}
+        }).execute()
+        
+        return {
+            "success": True,
+            "message": f"Successfully upgraded to {plan_code} plan",
+            "credits": plan.data["monthly_credits"]
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Payment verification failed: {str(e)}")
+
+# =============================================
 # START SERVER
 # =============================================
 
