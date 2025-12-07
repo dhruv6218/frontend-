@@ -625,6 +625,137 @@ async def verify_payment(
         raise HTTPException(status_code=500, detail=f"Payment verification failed: {str(e)}")
 
 # =============================================
+# GOOGLE DRIVE INTEGRATION ROUTES
+# =============================================
+
+@app.get("/api/integrations/google-drive/auth-url")
+async def get_google_drive_auth_url(authorization: str = Header(None)):
+    """Get Google Drive OAuth authorization URL"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        from services.google_drive_service import GoogleDriveService
+        drive_service = GoogleDriveService()
+        
+        auth_url = drive_service.get_authorization_url(state=org_id)
+        
+        return {"authorization_url": auth_url}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate auth URL: {str(e)}")
+
+@app.post("/api/integrations/google-drive/connect")
+async def connect_google_drive(code: str, authorization: str = Header(None)):
+    """Connect Google Drive with authorization code"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        from services.google_drive_service import GoogleDriveService
+        drive_service = GoogleDriveService()
+        
+        # Exchange code for tokens
+        tokens = drive_service.exchange_code_for_tokens(code)
+        
+        # Store tokens in integrations table (encrypted in production)
+        supabase.table("integrations").update({
+            "google_drive_connected": True,
+            "google_email": tokens["email"],
+            "google_token_encrypted": tokens["access_token"],  # Should encrypt in production
+            "google_refresh_token_encrypted": tokens["refresh_token"],
+        }).eq("org_id", org_id).execute()
+        
+        # Log audit
+        supabase.table("audit_logs").insert({
+            "org_id": org_id,
+            "actor_id": user.id,
+            "action": "GOOGLE_DRIVE_CONNECTED",
+            "target_type": "INTEGRATION",
+            "details": {"email": tokens["email"]}
+        }).execute()
+        
+        return {
+            "success": True,
+            "email": tokens["email"]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to connect Google Drive: {str(e)}")
+
+@app.post("/api/reports/{report_id}/save-to-drive")
+async def save_report_to_drive(report_id: str, authorization: str = Header(None)):
+    """Save report PDF to Google Drive"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        # Get report
+        report = supabase.table("reports").select("*, vendors(*)").eq("id", report_id).eq("org_id", org_id).single().execute()
+        
+        if not report.data:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        # Get Google Drive integration
+        integration = supabase.table("integrations").select("*").eq("org_id", org_id).single().execute()
+        
+        if not integration.data or not integration.data.get("google_drive_connected"):
+            raise HTTPException(status_code=400, detail="Google Drive not connected")
+        
+        # Get PDF content
+        pdf_url = report.data.get("pdf_url")
+        if not pdf_url:
+            # Generate PDF first
+            await generate_report_pdf(report_id, authorization)
+            report = supabase.table("reports").select("*").eq("id", report_id).single().execute()
+            pdf_url = report.data.get("pdf_url")
+        
+        # Download PDF from storage
+        file_path = f"{org_id}/{report_id}.pdf"
+        pdf_content = supabase.storage.from_("reports").download(file_path)
+        
+        # Upload to Drive
+        from services.google_drive_service import GoogleDriveService
+        drive_service = GoogleDriveService()
+        
+        vendor_name = report.data.get("vendors", {}).get("name", "Unknown")
+        file_name = f"Ravono_Report_{vendor_name}_{report_id[:8]}.pdf"
+        
+        drive_result = drive_service.upload_file(
+            file_content=pdf_content,
+            file_name=file_name,
+            mime_type="application/pdf",
+            access_token=integration.data["google_token_encrypted"],
+            refresh_token=integration.data.get("google_refresh_token_encrypted"),
+        )
+        
+        # Update report with Drive file ID
+        supabase.table("reports").update({
+            "drive_file_id": drive_result["file_id"]
+        }).eq("id", report_id).execute()
+        
+        # Log audit
+        supabase.table("audit_logs").insert({
+            "org_id": org_id,
+            "actor_id": user.id,
+            "action": "REPORT_SAVED_TO_DRIVE",
+            "target_type": "REPORT",
+            "target_id": report_id,
+            "details": {"file_id": drive_result["file_id"]}
+        }).execute()
+        
+        return {
+            "success": True,
+            "file_id": drive_result["file_id"],
+            "web_view_link": drive_result["web_view_link"]
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save to Drive: {str(e)}")
+
+# =============================================
 # START SERVER
 # =============================================
 
