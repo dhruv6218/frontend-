@@ -96,7 +96,7 @@ class RavonoBackendTester:
         }
         
         try:
-            response = requests.post(f"{self.api_url}/auth/signin", json=signin_data, timeout=10)
+            response = requests.post(f"{self.api_url}/auth/signin", data=signin_data, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("session") and data["session"].get("access_token"):
