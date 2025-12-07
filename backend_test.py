@@ -90,13 +90,13 @@ class RavonoBackendTester:
     
     def test_signin(self):
         """Test 4: User Signin"""
-        signin_data = {
+        signin_params = {
             "email": "test@ravono.com",
             "password": "Test@1234"
         }
         
         try:
-            response = requests.post(f"{self.api_url}/auth/signin", data=signin_data, timeout=10)
+            response = requests.post(f"{self.api_url}/auth/signin", params=signin_params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("session") and data["session"].get("access_token"):
