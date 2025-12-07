@@ -1,0 +1,64 @@
+================================================================================
+🚀 RAVONO BACKEND - QUICK DATABASE SETUP
+================================================================================
+
+STEP 1: Go to Supabase SQL Editor
+----------------------------------
+URL: https://uacgbxkjnlxkjmqdgbvq.supabase.co/project/uacgbxkjnlxkjmqdgbvq/sql/new
+
+STEP 2: Copy the ENTIRE content from this file:
+-----------------------------------------------
+/app/backend/supabase/schema.sql
+
+STEP 3: Paste into SQL Editor and click "RUN"
+---------------------------------------------
+This will create:
+✅ All 16 tables
+✅ RLS policies
+✅ Database triggers  
+✅ Indexes
+✅ Cron job functions
+✅ 4 subscription plans (FREE, STARTER, PRO, BUSINESS)
+
+STEP 4: Verify
+-------------
+After running, check "Table Editor" in left sidebar.
+You should see these 16 tables:
+- orgs
+- profiles
+- plans
+- subscriptions
+- credits
+- credit_logs
+- vendors
+- verifications
+- reports
+- branding_settings
+- jobs
+- integrations
+- suggestions
+- testimonials
+- notifications
+- audit_logs
+
+STEP 5: Run this command to finish setup:
+-----------------------------------------
+cd /app/backend
+python supabase/setup_storage.py
+
+This will create storage buckets for PDFs, logos, and CSV files.
+
+================================================================================
+THAT'S IT! Your database is ready to use! 🎉
+================================================================================
+
+Next: Start the backend server:
+  cd /app/backend
+  python server.py
+
+Server will run at: http://localhost:8001
+
+Test it:
+  curl http://localhost:8001/api/health
+
+================================================================================
