@@ -448,6 +448,68 @@ async def get_report_detail(report_id: str, authorization: str = Header(None)):
     
     return result.data
 
+@app.get("/api/reports/{report_id}/pdf")
+async def generate_report_pdf(report_id: str, authorization: str = Header(None)):
+    """Generate PDF for a report"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        # Get report data
+        report = supabase.table("reports")\
+            .select("*, vendors(*), verifications(*)")\
+            .eq("id", report_id)\
+            .eq("org_id", org_id)\
+            .single()\
+            .execute()
+        
+        if not report.data:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        # Get branding settings
+        branding = supabase.table("branding_settings")\
+            .select("*")\
+            .eq("org_id", org_id)\
+            .single()\
+            .execute()
+        
+        branding_data = branding.data if branding.data else {}
+        
+        # Import PDF generator
+        from services.pdf_generator import PDFReportGenerator
+        
+        generator = PDFReportGenerator(branding=branding_data)
+        
+        # Generate PDF
+        pdf_content = generator.generate_report(
+            vendor_data=report.data["vendors"],
+            verification_data=report.data["verifications"],
+            ai_summary={"risk_level": report.data.get("risk_level", "MEDIUM"), "summary": report.data.get("summary_text", "")},
+            report_id=report_id
+        )
+        
+        # Save PDF to storage
+        file_path = f"{org_id}/{report_id}.pdf"
+        supabase.storage.from_("reports").upload(
+            file_path,
+            pdf_content,
+            {"content-type": "application/pdf"}
+        )
+        
+        # Update report with PDF URL
+        pdf_url = supabase.storage.from_("reports").get_public_url(file_path)
+        supabase.table("reports").update({"pdf_url": pdf_url}).eq("id", report_id).execute()
+        
+        # Return PDF
+        return Response(
+            content=pdf_content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=report_{report_id}.pdf"}
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+
 # =============================================
 # PLANS ROUTES
 # =============================================
