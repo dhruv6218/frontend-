@@ -3,3 +3,7 @@ node_modules
 .vscode
 .next
 .env
+-e 
+# Environment files
+*.env
+*.env.*
