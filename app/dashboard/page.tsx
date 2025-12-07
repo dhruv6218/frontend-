@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -6,6 +6,7 @@ import DataTable from "@/app/components/ui/DataTable";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useI18n } from "@/app/components/i18n/LanguageProvider";
+import { useEffect, useState } from 'react';
 
 interface Row {
   date: string;
@@ -18,6 +19,17 @@ interface Row {
 
 export default function DashboardOverview() {
   const { t } = useI18n();
+  const [data, setData] = useState<Row[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const res = await fetch('/api/dashboard');
+      const jsonData = await res.json();
+      setData(jsonData);
+    }
+    fetchData();
+  }, []);
+
   const columns = [
     { key: "date", header: "Date" },
     { key: "vendor", header: "Vendor" },
@@ -26,14 +38,6 @@ export default function DashboardOverview() {
     { key: "risk", header: "Risk Score" },
     { key: "reason", header: "Reason" },
   ] as const;
-
-  const data: Row[] = [
-    { date: "2025-10-02 09:12", vendor: "Shree Logistics Pvt Ltd", check: "GST", status: "Verified", risk: 7, reason: "GSTIN active; filings on time" },
-    { date: "2025-10-02 08:55", vendor: "Apex Supplies", check: "Bank", status: "Match", risk: 18, reason: "Account holder matches PAN" },
-    { date: "2025-10-01 19:03", vendor: "Neo Components", check: "PAN", status: "Mismatch", risk: 74, reason: "PAN name mismatch vs invoice" },
-    { date: "2025-10-01 15:40", vendor: "Kamal Traders", check: "Aadhaar", status: "Verified", risk: 12, reason: "VID verified via OTP" },
-    { date: "2025-10-01 12:10", vendor: "Bright Textiles", check: "MCA", status: "Found", risk: 22, reason: "Active, no charges" },
-  ];
 
   return (
     <Protected allowedRoles={["user"]}>
@@ -105,7 +109,7 @@ export default function DashboardOverview() {
           </div>
 
           {/* Activity Feed */}
-          <div className="lg:col-span-2 rounded-xl border border-neutral-200/70 bg-white p-5 shadow-sm">
+          <div className="lg:col-.span-2 rounded-xl border border-neutral-200/70 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-neutral-900">Recent Activity</h3>
               <Link href="/dashboard/reports" className="text-xs text-orange-600 hover:text-orange-700 font-medium">View all</Link>

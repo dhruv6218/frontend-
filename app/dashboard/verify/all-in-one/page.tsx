@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -21,16 +21,15 @@ export default function AllInOne() {
 
   const submit = async () => {
     setLoading(true);
-    // Simulate verification
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    const reportId = `RPT-${Date.now()}`;
-    const summary = {
-      vendor: "Vendor Name",
-      riskLevel: 18,
-      checksCompleted: ["GST", "PAN", "Aadhaar", "Bank", "MCA"],
-      status: "Completed"
-    };
-    setVerificationResult({ reportId, summary });
+    const res = await fetch('/api/verify/all-in-one', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(form),
+    });
+    const data = await res.json();
+    setVerificationResult(data);
     setLoading(false);
   };
 

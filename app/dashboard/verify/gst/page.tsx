@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -12,7 +12,6 @@ import Link from "next/link";
 
 interface Row { gstin: string; business: string; status: string; filings: string; risk: number; }
 
-import { mockService } from "@/lib/mock/service";
 import { isValidGSTIN } from "@/lib/utils/validation";
 
 export default function VerifyGST() {
@@ -33,7 +32,8 @@ export default function VerifyGST() {
   ] as const;
 
   async function loadHistory() {
-    const items = await mockService.verifications.list();
+    const res = await fetch('/api/verifications/gst');
+    const items = await res.json();
     // Filter for GST type if needed, or just show all for demo
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapped: Row[] = items.filter((it: any) => it.type === 'gst').map((it: any) => ({
@@ -61,21 +61,15 @@ export default function VerifyGST() {
     setMsg(null);
     setVerificationResult(null);
     try {
-      const verif = await mockService.verifications.create("gst", { gstin, stateCode });
-      // Simulate report creation
-      const reportId = `RPT-${Date.now()}`;
-      const summary = {
-        gstin,
-        businessName: "ACME Corp",
-        status: "Active",
-        riskLevel: 15,
-        keyFields: {
-          legalName: "ACME Corporation",
-          registrationDate: "2020-01-15",
-          filingStatus: "Up to date"
-        }
-      };
-      setVerificationResult({ reportId, summary });
+      const res = await fetch('/api/verify/gst', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gstin, stateCode }),
+      });
+      const data = await res.json();
+      setVerificationResult(data);
       setMsg("GST verification completed.");
       await loadHistory();
     } catch (err) {

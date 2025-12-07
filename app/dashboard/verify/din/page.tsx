@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { mockService } from "@/lib/mock/service";
 import { isValidDIN } from "@/lib/utils/validation";
 
 interface Row { din: string; director: string; company: string; status: string; risk: number }
@@ -33,7 +32,8 @@ export default function VerifyDIN() {
   ] as const;
 
   async function loadHistory() {
-    const items = await mockService.verifications.list();
+    const res = await fetch('/api/verifications/din');
+    const items = await res.json();
     const mapped: Row[] = items.filter(it => it.type === 'din').map((it) => ({
       din: String((((it as any).payload as Record<string, unknown>)?.din) ?? ""),
       director: String(((it.result as Record<string, unknown>)?.director_name) ?? "—"),
@@ -59,20 +59,15 @@ export default function VerifyDIN() {
     setMsg(null);
     setVerificationResult(null);
     try {
-      await mockService.verifications.create("din", { din });
-      const reportId = `RPT-${Date.now()}`;
-      const summary = {
-        din,
-        directorName: "John Doe",
-        companyName: "ACME Corporation Ltd",
-        status: "Active",
-        riskLevel: 15,
-        keyFields: {
-          designation: "Director",
-          appointmentDate: "2020-01-15"
-        }
-      };
-      setVerificationResult({ reportId, summary });
+      const res = await fetch('/api/verify/din', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ din }),
+      });
+      const data = await res.json();
+      setVerificationResult(data);
       setMsg("DIN verification completed.");
       await loadHistory();
     } catch (err) {

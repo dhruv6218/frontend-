@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -12,7 +12,6 @@ import Link from "next/link";
 
 interface Row { pan: string; holder: string; status: string; risk: number; }
 
-import { mockService } from "@/lib/mock/service";
 import { isValidPAN } from "@/lib/utils/validation";
 
 export default function VerifyPAN() {
@@ -32,7 +31,8 @@ export default function VerifyPAN() {
   ] as const;
 
   async function loadHistory() {
-    const items = await mockService.verifications.list();
+    const res = await fetch('/api/verifications/pan');
+    const items = await res.json();
     const mapped: Row[] = items.filter((it: any) => it.type === 'pan').map((it: any) => ({
       pan: it.payload?.pan || "—",
       holder: it.payload?.holder || "—",
@@ -57,19 +57,15 @@ export default function VerifyPAN() {
     setMsg(null);
     setVerificationResult(null);
     try {
-      const verif = await mockService.verifications.create("pan", { pan, holder });
-      const reportId = `RPT-${Date.now()}`;
-      const summary = {
-        pan,
-        holderName: holder || "John Doe",
-        status: "Valid",
-        riskLevel: holder ? 20 : 35,
-        keyFields: {
-          nameMatch: holder ? "Match" : "Not verified",
-          status: "Active"
-        }
-      };
-      setVerificationResult({ reportId, summary });
+      const res = await fetch('/api/verify/pan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pan, holder }),
+      });
+      const data = await res.json();
+      setVerificationResult(data);
       setMsg("PAN verification completed.");
       await loadHistory();
     } catch (err) {

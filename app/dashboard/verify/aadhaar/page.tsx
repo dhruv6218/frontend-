@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -11,8 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 interface Row { masked: string; status: string; method: string; risk: number; }
-
-import { mockService } from "@/lib/mock/service";
 
 export default function VerifyAadhaar() {
   const router = useRouter();
@@ -33,7 +31,8 @@ export default function VerifyAadhaar() {
   ] as const;
 
   async function loadHistory() {
-    const items = await mockService.verifications.list();
+    const res = await fetch('/api/verifications/aadhaar');
+    const items = await res.json();
     const mapped: Row[] = items.filter((it: any) => it.type.startsWith('aadhaar')).map((it: any) => ({
       masked: it.payload?.aadhaar ? String(it.payload.aadhaar).replace(/\d(?=\d{4})/g, "*") : "—",
       status: it.status,
@@ -50,9 +49,15 @@ export default function VerifyAadhaar() {
     setLoading(true);
     setMsg(null);
     try {
-      const res: any = await mockService.verifications.create("aadhaar_send_otp", { aadhaar: vid || aadhaar });
-      const r = (res.result ?? {}) as Record<string, unknown>;
-      const rid = String((r.ReqId as string) ?? (r.reqId as string) ?? "");
+      const res = await fetch('/api/verify/aadhaar/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ aadhaar: vid || aadhaar }),
+      });
+      const data = await res.json();
+      const rid = String((data.result as any)?.ReqId ?? (data.result as any)?.reqId ?? "");
       if (rid) setReqId(rid);
       setMsg("OTP sent to Aadhaar-linked mobile. Enter OTP below to complete.");
       await loadHistory();
@@ -69,18 +74,15 @@ export default function VerifyAadhaar() {
     setMsg(null);
     setVerificationResult(null);
     try {
-      await mockService.verifications.create("aadhaar_submit_otp", { aadhaar: vid || aadhaar, otp, reqId });
-      const reportId = `RPT-${Date.now()}`;
-      const summary = {
-        aadhaar: (vid || aadhaar).replace(/\d(?=\d{4})/g, "*"),
-        status: "Verified",
-        riskLevel: 10,
-        keyFields: {
-          verificationMethod: "OTP",
-          masked: (vid || aadhaar).replace(/\d(?=\d{4})/g, "*")
-        }
-      };
-      setVerificationResult({ reportId, summary });
+      const res = await fetch('/api/verify/aadhaar/submit-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ aadhaar: vid || aadhaar, otp, reqId }),
+      });
+      const data = await res.json();
+      setVerificationResult(data);
       setMsg("Aadhaar verified successfully.");
       setOtp("");
       setReqId("");

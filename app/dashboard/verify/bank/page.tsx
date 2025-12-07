@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Protected from "@/app/components/auth/Protected";
 import PageShell from "@/app/components/dashboard/PageShell";
@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { mockService } from "@/lib/mock/service";
 import { isValidIFSC, isValidBankAccount } from "@/lib/utils/validation";
 
 interface Row { account: string; holder: string; ifsc: string; status: string; risk: number; }
@@ -33,7 +32,8 @@ export default function VerifyBank() {
   ] as const;
 
   async function loadHistory() {
-    const items = await mockService.verifications.list();
+    const res = await fetch('/api/verifications/bank');
+    const items = await res.json();
     const mapped: Row[] = items.filter(it => it.type === 'bank').map((it) => ({
       account: String(((it.payload as Record<string, unknown>)?.account) ?? ""),
       holder: String(((it.payload as Record<string, unknown>)?.name) ?? "—"),
@@ -63,20 +63,15 @@ export default function VerifyBank() {
     setMsg(null);
     setVerificationResult(null);
     try {
-      await mockService.verifications.create("bank", { account, ifsc, name: holder });
-      const reportId = `RPT-${Date.now()}`;
-      const summary = {
-        account: account.replace(/\d(?=\d{4})/g, "X"),
-        ifsc,
-        holderName: holder || "Account Holder",
-        status: "Verified",
-        riskLevel: holder ? 18 : 25,
-        keyFields: {
-          nameMatch: holder ? "Match" : "Not verified",
-          bankName: "State Bank of India"
-        }
-      };
-      setVerificationResult({ reportId, summary });
+      const res = await fetch('/api/verify/bank', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ account, ifsc, name: holder }),
+      });
+      const data = await res.json();
+      setVerificationResult(data);
       setMsg("Bank verification completed.");
       await loadHistory();
     } catch (err) {
