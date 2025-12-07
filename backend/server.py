@@ -756,6 +756,102 @@ async def save_report_to_drive(report_id: str, authorization: str = Header(None)
         raise HTTPException(status_code=500, detail=f"Failed to save to Drive: {str(e)}")
 
 # =============================================
+# BULK UPLOAD ROUTES
+# =============================================
+
+@app.post("/api/bulk-upload")
+async def create_bulk_upload_job(
+    file: UploadFile = File(...),
+    job_name: str = "",
+    authorization: str = Header(None)
+):
+    """Create bulk verification job from CSV"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    try:
+        # Validate file type
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+        
+        # Read CSV content
+        csv_content = await file.read()
+        
+        # Upload to storage
+        file_path = f"{org_id}/{uuid.uuid4()}.csv"
+        supabase.storage.from_("bulk-uploads").upload(
+            file_path,
+            csv_content,
+            {"content-type": "text/csv"}
+        )
+        
+        file_url = supabase.storage.from_("bulk-uploads").get_public_url(file_path)
+        
+        # Parse CSV to count rows
+        import csv
+        from io import StringIO
+        
+        csv_string = csv_content.decode('utf-8')
+        csv_reader = csv.DictReader(StringIO(csv_string))
+        rows = list(csv_reader)
+        
+        # Create job record
+        job_data = {
+            "org_id": org_id,
+            "user_id": user.id,
+            "type": "BULK_VERIFY",
+            "job_name": job_name or file.filename,
+            "file_url": file_url,
+            "status": "pending",
+            "total_count": len(rows),
+            "success_count": 0,
+            "error_count": 0,
+        }
+        
+        job = supabase.table("jobs").insert(job_data).execute()
+        
+        # Log audit
+        supabase.table("audit_logs").insert({
+            "org_id": org_id,
+            "actor_id": user.id,
+            "action": "BULK_UPLOAD_CREATED",
+            "target_type": "JOB",
+            "target_id": job.data[0]["id"],
+            "details": {"total_rows": len(rows)}
+        }).execute()
+        
+        return {
+            "success": True,
+            "job_id": job.data[0]["id"],
+            "total_rows": len(rows)
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Bulk upload failed: {str(e)}")
+
+@app.get("/api/bulk-upload/jobs")
+async def get_bulk_jobs(authorization: str = Header(None)):
+    """Get all bulk upload jobs for organization"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    result = supabase.table("jobs").select("*").eq("org_id", org_id).order("created_at", desc=True).execute()
+    
+    return result.data
+
+@app.get("/api/bulk-upload/jobs/{job_id}")
+async def get_bulk_job_detail(job_id: str, authorization: str = Header(None)):
+    """Get bulk job details"""
+    user = get_user_from_token(authorization)
+    org_id = get_org_id(user.id)
+    
+    result = supabase.table("jobs").select("*").eq("id", job_id).eq("org_id", org_id).single().execute()
+    
+    return result.data
+
+# =============================================
 # START SERVER
 # =============================================
 
