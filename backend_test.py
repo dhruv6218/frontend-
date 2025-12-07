@@ -64,7 +64,7 @@ class RavonoBackendTester:
     
     def test_signup(self):
         """Test 3: User Signup"""
-        signup_data = {
+        signup_params = {
             "email": "test@ravono.com",
             "password": "Test@1234",
             "name": "Test User",
@@ -72,7 +72,7 @@ class RavonoBackendTester:
         }
         
         try:
-            response = requests.post(f"{self.api_url}/auth/signup", data=signup_data, timeout=10)
+            response = requests.post(f"{self.api_url}/auth/signup", params=signup_params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("user") and data.get("session"):
