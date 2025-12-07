@@ -5,7 +5,7 @@ Integrated with Supabase database and external verification APIs
 
 from fastapi import FastAPI, HTTPException, Depends, Header, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta
