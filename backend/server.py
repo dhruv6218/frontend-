@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta
 import os
 import uuid
+from uuid import uuid4
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import httpx
